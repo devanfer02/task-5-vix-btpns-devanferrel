@@ -70,6 +70,7 @@ func RegisterUser(ctx *gin.Context) {
 			"status": http.StatusInternalServerError,
 			"error": err.Error(),
 		})
+		return
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H {

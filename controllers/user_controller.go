@@ -115,7 +115,7 @@ func DeleteUser(ctx *gin.Context) {
 
 	var user models.User 
 
-	if database.DB.Delete(&user, userId).RowsAffected == 0 {
+	if database.DB.Unscoped().Delete(&user, userId).RowsAffected == 0 {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
 			"message": "failed to delete data",
 			"status": http.StatusBadRequest,
@@ -124,6 +124,7 @@ func DeleteUser(ctx *gin.Context) {
 	}
 
 	ctx.Set("user", nil)
+	ctx.SetCookie("Authorization", "", -1, "", "", true, true)
 
 	ctx.JSON(200, gin.H {
 		"message": "successfully delete data",

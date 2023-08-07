@@ -199,7 +199,7 @@ func DeletePhoto(ctx *gin.Context) {
 		return 
 	}
 
-	if database.DB.Where("id = ? AND user_id = ?", id, userId).Delete(&photo).RowsAffected == 0 {
+	if database.DB.Unscoped().Where("id = ? AND user_id = ?", id, userId).Delete(&photo).RowsAffected == 0 {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
 			"message": "failed to delete data", 
 			"status": http.StatusBadRequest,

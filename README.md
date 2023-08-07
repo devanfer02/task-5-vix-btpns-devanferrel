@@ -258,3 +258,10 @@
     "status": 200
     }
     ```
+    json response if fail or try to delete another use photo : 
+    ```
+    {
+    "message": "failed to delete data",
+    "status": 400
+    }
+    ```
