@@ -9,9 +9,16 @@ import (
 	"github.com/devanfer02/task-5-vix-btpns-devanferrel/helpers"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"github.com/asaskevich/govalidator"
 )
 
 func CreatePhoto(ctx *gin.Context) {
+	userId, ok := helpers.GetUserID(ctx);
+
+	if !ok {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+	}
+
 	var photo models.Photo
 
 	if err := ctx.ShouldBindJSON(&photo); err != nil {
@@ -22,15 +29,28 @@ func CreatePhoto(ctx *gin.Context) {
 		return
 	}
 
+	if _, err := govalidator.ValidateStruct(photo); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"message": "bad body request", 
+			"status": http.StatusBadRequest,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	photo.UserID = userId
 	err := database.DB.Create(&photo).Error
 
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
-			"message": "bad body request", 
+			"message": "internal server error", 
 			"status": http.StatusInternalServerError,
 			"error": err.Error(),
 		})
+		return
 	}
+
+	ctx.Set("user",nil)
 
 	ctx.JSON(http.StatusCreated, gin.H {
 		"data_record": photo,
@@ -94,7 +114,7 @@ func GetPhotoById(ctx *gin.Context) {
 					"error": err.Error(),
 				})
 		}
-		return;
+		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H {
@@ -125,6 +145,15 @@ func UpdatePhoto(ctx *gin.Context) {
 		return
 	}
 
+	if _, err := govalidator.ValidateStruct(photo); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"message": "bad body request", 
+			"status": http.StatusBadRequest,
+			"error": err.Error(),
+		})
+		return
+	}
+
 	if database.DB.Model(&photo).Where("id = ?", id).Updates(&photo).RowsAffected == 0 {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
 			"message": "failed to update data", 
@@ -133,7 +162,7 @@ func UpdatePhoto(ctx *gin.Context) {
 		return 
 	}
 
-	photo.ID = id;
+	ctx.Set("user", nil)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"data_record": photo,
@@ -162,6 +191,8 @@ func DeletePhoto(ctx *gin.Context) {
 		})
 		return 
 	}
+
+	ctx.Set("user", nil)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "successfully delete data",
