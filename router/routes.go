@@ -19,8 +19,8 @@ func InitRouter() *gin.Engine {
 	// User
 	router.GET("/users", controllers.GetUsers)
 	router.GET("/users/:id", controllers.GetUserById)
-	router.PUT("/users/:id", middlewares.RequireAuth, controllers.UpdateUser)
-	router.DELETE("/users/:userId", middlewares.RequireAuth, controllers.LoginUser)
+	router.PUT("/users", middlewares.RequireAuth, controllers.UpdateUser)
+	router.DELETE("/users", middlewares.RequireAuth, controllers.DeleteUser)
 
 	// Photo
 	router.GET("/photos", controllers.GetPhotos)

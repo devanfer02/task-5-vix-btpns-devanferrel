@@ -3,9 +3,10 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/devanfer02/task-5-vix-btpns-devanferrel/database"
-	"github.com/devanfer02/task-5-vix-btpns-devanferrel/models"
 	"github.com/devanfer02/task-5-vix-btpns-devanferrel/helpers"
+	"github.com/devanfer02/task-5-vix-btpns-devanferrel/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -60,13 +61,72 @@ func GetUserById(ctx *gin.Context) {
 }
 
 func UpdateUser(ctx *gin.Context) {
-	ctx.JSON(200, gin.H{
-		"message": "OK",
+	userId, ok := helpers.GetUserID(ctx);
+
+	if !ok {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	var user models.User
+
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"message": "bad body request",
+			"status": http.StatusBadRequest,
+		})
+		return 
+	}
+
+	if _, err := govalidator.ValidateStruct(user); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"message": "bad body request", 
+			"status": http.StatusBadRequest,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	user.Password, _= helpers.HashPassword(user.Password)
+
+	if database.DB.Model(&user).Where("id = ?", userId).Updates(&user).RowsAffected == 0 {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"message": "failed to update data", 
+			"status": http.StatusBadRequest,
+		})
+		return
+	}
+
+	ctx.Set("user",nil)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "successfully update data",
+		"status": http.StatusOK,
 	})
 }
 
 func DeleteUser(ctx *gin.Context) {
+	userId, ok := helpers.GetUserID(ctx)
+
+	if !ok {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	var user models.User 
+
+	if database.DB.Delete(&user, userId).RowsAffected == 0 {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"message": "failed to delete data",
+			"status": http.StatusBadRequest,
+		})
+		return 
+	}
+
+	ctx.Set("user", nil)
+
 	ctx.JSON(200, gin.H {
-		"message":"OK",
+		"message": "successfully delete data",
+		"status": http.StatusOK,
 	})
 }

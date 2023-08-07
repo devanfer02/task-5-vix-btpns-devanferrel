@@ -17,6 +17,7 @@ func CreatePhoto(ctx *gin.Context) {
 
 	if !ok {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
 	}
 
 	var photo models.Photo
@@ -125,6 +126,13 @@ func GetPhotoById(ctx *gin.Context) {
 }
 
 func UpdatePhoto(ctx *gin.Context) {
+	userId, ok := helpers.GetUserID(ctx);
+
+	if !ok {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
 	var photo models.Photo
 
 	id, err := helpers.GetParamId(ctx)
@@ -154,7 +162,7 @@ func UpdatePhoto(ctx *gin.Context) {
 		return
 	}
 
-	if database.DB.Model(&photo).Where("id = ?", id).Updates(&photo).RowsAffected == 0 {
+	if database.DB.Model(&photo).Where("id = ? AND user_id = ?", id, userId).Updates(&photo).RowsAffected == 0 {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
 			"message": "failed to update data", 
 			"status": http.StatusBadRequest,
@@ -172,6 +180,13 @@ func UpdatePhoto(ctx *gin.Context) {
 }
 
 func DeletePhoto(ctx *gin.Context) {
+	userId, ok := helpers.GetUserID(ctx);
+
+	if !ok {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
 	id, err := helpers.GetParamId(ctx)
 
 	var photo models.Photo;
@@ -184,9 +199,9 @@ func DeletePhoto(ctx *gin.Context) {
 		return 
 	}
 
-	if database.DB.Delete(&photo, id).RowsAffected == 0 {
+	if database.DB.Where("id = ? AND user_id = ?", id, userId).Delete(&photo).RowsAffected == 0 {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
-			"message": "failed to update data", 
+			"message": "failed to delete data", 
 			"status": http.StatusBadRequest,
 		})
 		return 

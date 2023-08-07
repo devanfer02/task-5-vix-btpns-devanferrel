@@ -44,6 +44,22 @@ func RegisterUser(ctx *gin.Context) {
 		return
 	}
 
+	var userDb models.User
+	count := int64(0)
+
+	database.DB.
+		Model(&userDb).
+		First(&userDb, "username = ? OR email = ?", user.Username, user.Email).
+		Count(&count)
+		
+	if count > 0 {
+		ctx.AbortWithStatusJSON(http.StatusConflict, gin.H {
+			"message": "username or email is already used", 
+			"status": http.StatusConflict,
+		})
+		return 
+	}
+
 	user.Password = hashedPassord
 
 	err = database.DB.Create(&user).Error
@@ -112,7 +128,6 @@ func LoginUser(ctx *gin.Context) {
 			"message": "failed to create token",
 			"status": http.StatusInternalServerError,
 			"error": err.Error(),
-			"key": os.Getenv("SECRET_KEY"),
 		})
 		return
 	}
@@ -132,5 +147,6 @@ func LogoutUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H {
 		"message": "successfully logout",
+		"status": http.StatusOK,
 	})
 }
