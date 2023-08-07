@@ -1,15 +1,32 @@
 package database
 
 import (
-	"gorm.io/gorm"
-	"gorm.io/driver/mysql"
+	"fmt"
+	"os"
 	"github.com/devanfer02/task-5-vix-btpns-devanferrel/models"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
 func ConnectToDB() {
-	db, err := gorm.Open(mysql.Open("root:@tcp(localhost:3306)/task5_vix_btpns"))
+	err := godotenv.Load();
+
+	if err != nil {
+		panic(err)
+	}	
+
+	dsn := fmt.Sprintf(
+		"%s%s:@tcp(%s)/%s", 
+		os.Getenv("DB_USERNAME"), 
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_CONNECTION"), 
+		os.Getenv("DB_NAME"),
+	)
+	
+	db, err := gorm.Open(mysql.Open(dsn))
 
 	if err != nil {
 		panic(err)
